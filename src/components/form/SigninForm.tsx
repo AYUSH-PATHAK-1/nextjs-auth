@@ -16,6 +16,9 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import Link from "next/link";
 import SigninwithGoogle from "../SigninwithGoogle";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 const FormSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid Email"),
@@ -26,6 +29,8 @@ const FormSchema = z.object({
 });
 
 const SigninForm = () => {
+  const { toast } = useToast();
+  const router = useRouter();
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     // defaultValues: {
@@ -34,8 +39,30 @@ const SigninForm = () => {
     // },
   });
 
-  const onSubmit = (values: z.infer<typeof FormSchema>) => {
-    console.log(values);
+  const onSubmit = async (values: z.infer<typeof FormSchema>) => {
+    const signInData = await signIn("credentials", {
+      email: values.email,
+      password: values.password,
+      redirect: false,
+    });
+    // console.log(signInData);
+    if (signInData?.error) {
+      toast({
+        title: "Error",
+        description: "Oops! Something Went Wrong !",
+        variant: "destructive",
+      });
+    } else {
+      console.log("Sign-in successful");
+      toast({
+        title: "LogedIn Successfully",
+        description: "Nice !",
+        variant: "success",
+      });
+      // router.refresh();
+      router.push("/admin");
+      router.refresh();
+    }
   };
 
   return (
